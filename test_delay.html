@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Draw Rectangles Example</title>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    // Get a reference to the canvas element
+    const canvas = document.getElementById('canvas');
+
+    // Get the canvas context
+    const ctx = canvas.getContext('2d');
+
+    // Set the width and height of the canvas
+    canvas.width = 400;
+    canvas.height = 200;
+
+    // Define an array of rectangle objects with their properties
+    const rectangles = [
+      { x: 20, y: 20, width: 100, height: 50, color: 'red' },
+      { x: 150, y: 70, width: 120, height: 80, color: 'green' },
+      { x: 290, y: 30, width: 80, height: 120, color: 'blue' }
+    ];
+
+    // Function to draw a rectangle
+    function drawRectangle(rectangle) {
+      ctx.fillStyle = rectangle.color;
+      ctx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+    }
+
+    // Function to draw the rectangles with a delay between each one
+    function drawRectanglesWithDelay() {
+      let index = 0;
+
+      function drawNextRectangle() {
+        if (index < rectangles.length) {
+          const rectangle = rectangles[index];
+          drawRectangle(rectangle);
+          index++;
+
+          setTimeout(drawNextRectangle, 1000); // Delay for 1 second (1000 milliseconds)
+        }
+      }
+
+      drawNextRectangle();
+    }
+
+    // Call the function to draw the rectangles with a delay
+    drawRectanglesWithDelay();
+  </script>
+</body>
+</html>

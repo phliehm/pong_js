@@ -45,6 +45,9 @@ const keys = {
     s: {
         pressed : false
     },
+    enter: {
+        pressed: false
+    },
 }
 
 let pause = false
@@ -54,6 +57,7 @@ function togglePause() {
     pause = !pause
 }
 
+let endGame = false
 // I guess the EventListeners just run in parallel all the time?
 // keys pressed
 window.addEventListener('keydown',(event) => {
@@ -69,6 +73,9 @@ window.addEventListener('keydown',(event) => {
             spacebarDown = true
             togglePause()
             break
+        case 'Enter':
+            keys.enter.pressed = true
+            endGame = true
     }
 })
 
@@ -83,17 +90,26 @@ window.addEventListener('keyup',(event)=> {
             break    
         case ' ':
             spacebarDown = false
+        case '\n':
+            keys.enter.pressed = false
     }
 })
 
-function animate() {
 
-    // independend of time, so right now the frame rate is not fixed
-    window.requestAnimationFrame(animate)       // Why do I need the "animate"?
-    if (pause) {
-        drawPause()    
+function animate() {
+    if (endGame) {
+        //await checkAndDrawWinner()  
         return
     }
+    // independend of time, so right now the frame rate is not fixed
+    window.requestAnimationFrame(animate)       // Why do I need the "animate" --> recursion
+     
+    if (pause && !endGame) {
+        drawPause()   
+        return
+    }
+
+    
     // draw black screen and white frame
     ctx.fillStyle = 'white'
     ctx.fillRect(0,0,canvas.width, canvas.height)
@@ -129,7 +145,6 @@ function animate() {
     Ball.update()
     
 }
-
 animate()
 
 // AI Paddle gets same y value as ball
@@ -181,4 +196,85 @@ function drawMiddleLine() {
     ctx.moveTo(canvas.width/2,0)
     ctx.lineTo(canvas.width/2,canvas.height)
     ctx.stroke()
+}
+
+// check who is the winner
+async function checkAndDrawWinner() {
+    // draw rectangle to have proper background, with frame
+    drawMiddleRectangle()
+
+    // set text according to state
+    if (pointsPlayer1 === pointsPlayer2) {
+        text = "It's a draw"
+    } 
+    if (pointsPlayer1 > pointsPlayer2) {text = "Player 1 won"}   
+    if (pointsPlayer1 < pointsPlayer2) {text = "Player 2 won"}
+    // write text to the middle of the screen
+    drawTextInTheMiddle(text)
+
+    // restart text
+    ctx.font = '20px Arial'
+    text = 'Hit "s" if you want to restart the game'
+    ctx.fillText(text,Math.floor(canvas.width / 2),Math.floor(canvas.height /2)+70)
+
+    await resetGame()
+
+}
+
+// resets the game
+async function resetGame() {
+    if (keys.s.pressed === true) {
+        pointsPlayer1 = 0
+        pointsPlayer2 = 0
+        Player.position.y = 300
+        AI.position.y = 300
+        Ball.position.x = canvas.width/2
+        Ball.position.y = canvas.height/2
+        await startGame()
+        endGame = false
+    }
+    
+}
+
+// countdown to start
+async function startGame() {
+    drawMiddleRectangle()
+    drawTextInTheMiddle('3')
+    console.log(3)
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Delay before proceeding to the next step
+    drawMiddleRectangle()
+    drawTextInTheMiddle('2')
+    console.log(2)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    drawMiddleRectangle()
+    drawTextInTheMiddle('1')
+    console.log(1)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+// sleep function, not really working
+function sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+    do {
+      currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
+}
+
+// draw a rectangle in the middle
+function drawMiddleRectangle() {
+    // draw rectangle to have proper background, with frame
+    ctx.fillStyle = 'white'
+    ctx.fillRect(canvas.width/4,canvas.height/4,canvas.width/2,canvas.height/2)
+    ctx.fillStyle = 'black'
+    ctx.fillRect(canvas.width/4+1,canvas.height/4+1,canvas.width/2-2,canvas.height/2-2)
+}
+
+function drawTextInTheMiddle(text) {
+    // set properties for the text
+    ctx.font = '50px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = 'white'
+    ctx.fillText(text,Math.floor(canvas.width / 2),Math.floor(canvas.height /2))
 }

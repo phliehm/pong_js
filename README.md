@@ -27,8 +27,8 @@ Keyboard input
 
 # To Do
 
-- add 2 player at any time (easy to do --> Implement control in the class?)
-- adjust ball speed, speed of paddles
+- [ ] add 2 player at any time (easy to do --> Implement control in the class?)
+- [ ] adjust ball speed, speed of paddles
 
 - [x] 1. Count points    (left and right)
 - [ ] 2. Start / Pause / End
