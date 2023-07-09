@@ -22,14 +22,23 @@ function PaddleBallCollision(paddle,ball) {
     ball.velocity.y = -ball.velocity.y 
 }
 
+// returns 'left' when the ball hit the left wall, and 'right' ...
+// returns 'none' when no collision
 function WallCollision(ball) {
-    if (ball.position.x + ball.radius <= 0 || ball.position.x >= canvas.width) {
+    if (ball.position.x + ball.radius <= 0) {
         ball.position.x = canvas.width / 2
         ball.position.y = canvas.height / 2
+        return 'left'
+    } 
+    if (ball.position.x >= canvas.width) {
+        ball.position.x = canvas.width / 2
+        ball.position.y = canvas.height / 2
+        return 'right'
     }
     if (ball.position.y + ball.radius <= 0 || ball.position.y >= canvas.height) {
         ball.velocity.y = -ball.velocity.y
     }
+    return 'none'
     
 }
   
