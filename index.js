@@ -7,6 +7,8 @@ canvas.height = 600
 var pointsPlayer1 = 0
 var pointsPlayer2 = 0
 
+const maxPoints = 5
+
 
 // create a new Paddle for the player
 const Player = new Paddle ({
@@ -40,10 +42,16 @@ const Ball = new Projectile ({
 
 const keys = {
     w: {
-        pressed : false
+        pressed: false
     },
     s: {
-        pressed : false
+        pressed: false
+    },
+    o: {
+        pressed: false
+    },
+    l: {
+        pressed: false
     },
     enter: {
         pressed: false
@@ -68,6 +76,12 @@ window.addEventListener('keydown',(event) => {
         case 's':
             keys.s.pressed = true
             break
+        case 'o':
+            keys.o.pressed = true
+            break
+        case 'l':
+            keys.l.pressed = true
+            break
         case ' ': 
             if (spacebarDown) {break}
             spacebarDown = true
@@ -88,27 +102,41 @@ window.addEventListener('keyup',(event)=> {
         case 's':
             keys.s.pressed = false
             break    
+        case 'o':
+            keys.o.pressed = false
+            break
+        case 'l':
+            keys.l.pressed = false
+            break  
         case ' ':
             spacebarDown = false
+            break
         case '\n':
             keys.enter.pressed = false
+            break
     }
 })
 
 
 function animate() {
-    if (endGame) {
-        //await checkAndDrawWinner()  
-        return
-    }
+    
     // independend of time, so right now the frame rate is not fixed
     window.requestAnimationFrame(animate)       // Why do I need the "animate" --> recursion
      
     if (pause && !endGame) {
+        console.log("Pausing Game")
         drawPause()   
         return
     }
 
+    if (endGame) {
+        console.log("Ending game")
+        checkAndDrawWinner()  
+        return
+    }
+
+    // check if someone has won
+    checkWinLoose()
     
     // draw black screen and white frame
     ctx.fillStyle = 'white'
@@ -119,17 +147,11 @@ function animate() {
     // Player 1 //
     //////////////
 
-    // up
-    if (keys.w.pressed) {
-        Player.position.y -= 10
 
-    }
-    // down
-    if (keys.s.pressed) {
-        Player.position.y += 10
-    }
+    //fitAItoBall(AI,Ball)            // moves AI Paddle like Ball
+    // simulates AI Movement by chaning the velocity
+    botMovement(AI,Ball)
 
-    fitAItoBall(AI,Ball)            // moves AI Paddle like Ball
     // Collision testing
     PaddleBallCollision(Player,Ball)
     PaddleBallCollision(AI,Ball)
@@ -140,6 +162,8 @@ function animate() {
     updatePoints(statusWallCollision)   // +1 if left or right wall hit
     drawPoints()
     drawMiddleLine()
+    updateSpeedofPaddle(Player,keys.w.pressed,keys.s.pressed)
+    updateSpeedofPaddle(AI,keys.o.pressed,keys.l.pressed)
     Player.update()
     AI.update()
     Ball.update()
@@ -148,9 +172,70 @@ function animate() {
 animate()
 
 // AI Paddle gets same y value as ball
-function fitAItoBall(paddle,ball) {
-    paddle.position.y = ball.position.y - paddle.height / 2
+function fitAItoBall(bot,ball) {
+    bot.position.y = ball.position.y - bot.height / 2
 }
+
+// better bot which doesnt always win
+function botMovement(bot,ball) {
+    let r = Math.random()
+
+    // ball is moving away
+    if (ball.velocity.x < 0) {
+        bot.velocity.y = 0
+        return
+    }
+    // ball is not close enough yet
+    if (ball.position.x < 2 * canvas.width / 4) {
+        bot.velocity.y = 0
+        keys.o.pressed = false
+        keys.l.pressed = false
+        return
+    }
+    // randomly choose if paddle moves, >1 no effect
+    if (r > 1) {return}
+    // ball is higher than bot, so move up
+    if (bot.position.y > ball.position.y - bot.height / 2) {
+        keys.o.pressed = true
+        keys.l.pressed = false
+        return
+    }
+    // move down
+    keys.l.pressed = true
+    keys.o.pressed = false
+}
+
+// updates the speed of the paddle
+function updateSpeedofPaddle(paddle,pressedUp,pressedDown){
+    //console.log(pressedUp)
+    if (pressedUp == true) {
+        if (paddle.velocity.y > 0) {paddle.velocity.y = 0}
+        paddle.velocity.y -= 0.7
+        return
+    }
+    if (pressedDown === true) {
+        if (paddle.velocity.y < 0) {paddle.velocity.y = 0}
+        paddle.velocity.y +=0.7
+        return
+    }
+
+    // deccelerating
+    paddle.velocity.y *= 0.8
+    // old function, no velocity
+
+        // up 
+    /*
+    if (keys.w.pressed) {
+        Player.position.y -= 10
+
+    }
+    // down
+    if (keys.s.pressed) {
+        Player.position.y += 10
+    }
+    */
+}
+
 
 // Draw Pause
 
@@ -199,7 +284,7 @@ function drawMiddleLine() {
 }
 
 // check who is the winner
-async function checkAndDrawWinner() {
+function checkAndDrawWinner() {
     // draw rectangle to have proper background, with frame
     drawMiddleRectangle()
 
@@ -217,12 +302,12 @@ async function checkAndDrawWinner() {
     text = 'Hit "s" if you want to restart the game'
     ctx.fillText(text,Math.floor(canvas.width / 2),Math.floor(canvas.height /2)+70)
 
-    await resetGame()
+    resetGame()
 
 }
 
 // resets the game
-async function resetGame() {
+function resetGame() {
     if (keys.s.pressed === true) {
         pointsPlayer1 = 0
         pointsPlayer2 = 0
@@ -230,13 +315,14 @@ async function resetGame() {
         AI.position.y = 300
         Ball.position.x = canvas.width/2
         Ball.position.y = canvas.height/2
-        await startGame()
+        //startGame()
         endGame = false
     }
     
 }
 
-// countdown to start
+/*
+// countdown to start --> doesnt work right now, sync problem
 async function startGame() {
     drawMiddleRectangle()
     drawTextInTheMiddle('3')
@@ -251,6 +337,7 @@ async function startGame() {
     console.log(1)
     await new Promise((resolve) => setTimeout(resolve, 500));
 }
+*/
 
 // sleep function, not really working
 function sleep(milliseconds) {
@@ -277,4 +364,12 @@ function drawTextInTheMiddle(text) {
     ctx.textBaseline = 'middle'
     ctx.fillStyle = 'white'
     ctx.fillText(text,Math.floor(canvas.width / 2),Math.floor(canvas.height /2))
+}
+
+// ends game after max points for one of the players
+function checkWinLoose() {
+    if (pointsPlayer1 === maxPoints || pointsPlayer2 === maxPoints) {
+        endGame = true
+        checkAndDrawWinner()
+    }
 }
